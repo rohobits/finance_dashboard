@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FI Dashboard · Foster & Maisey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── TOKENS ── */
+  :root {
+    --navy:       #0D1F35;
+    --navy-2:     #1A3A5C;
+    --teal:       #0B5E49;
+    --teal-mid:   #1A9E75;
+    --teal-light: #D4F0E7;
+    --amber:      #7A4508;
+    --amber-mid:  #E8940A;
+    --amber-light:#FDF0D5;
+    --purple:     #2E2780;
+    --purple-mid: #6E68D8;
+    --purple-light:#ECEAFB;
+    --red:        #8B2020;
+    --red-light:  #FAEAEA;
+    --bg:         #0A0F1A;
+    --surface:    #111827;
+    --surface-2:  #1C2537;
+    --border:     rgba(255,255,255,0.07);
+    --border-2:   rgba(255,255,255,0.12);
+    --text:       #F0F4FF;
+    --text-2:     #8A9BB8;
+    --text-3:     #4A5A72;
+    --green:      #1A9E75;
+    --font:       'Syne', sans-serif;
+    --mono:       'JetBrains Mono', monospace;
+    --radius:     14px;
+    --radius-sm:  8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ── LOADING ── */
+  #loading {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; z-index: 100;
+    transition: opacity 0.4s;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+  .loader-ring {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border-2);
+    border-top-color: var(--teal-mid);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { font-size: 12px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--mono); }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 20px 20px 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .header-title { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); }
+  .header-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; font-family: var(--mono); }
+  .sync-badge {
+    font-size: 10px; font-family: var(--mono);
+    color: var(--teal-mid); background: rgba(26,158,117,0.12);
+    border: 1px solid rgba(26,158,117,0.25);
+    padding: 4px 10px; border-radius: 20px;
+    white-space: nowrap; margin-top: 4px;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    display: flex; gap: 6px;
+    padding: 16px 20px 0;
+    overflow-x: auto; scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex-shrink: 0;
+    font-family: var(--font); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 7px 14px; border-radius: 20px;
+    border: 1px solid var(--border-2);
+    background: var(--surface); color: var(--text-2);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .nav-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* ── SECTIONS ── */
+  .section { display: none; padding: 20px 20px 0; animation: fadeUp 0.3s ease; }
+  .section.active { display: block; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── SECTION HEADER ── */
+  .sec-header { margin-bottom: 16px; }
+  .sec-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+  .sec-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; font-family: var(--mono); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+  .card-value { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; font-family: var(--mono); }
+  .card-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+  .stat {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+  .stat-label { font-size: 10px; color: var(--text-3); margin-bottom: 4px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .stat-value { font-size: 17px; font-weight: 700; font-family: var(--mono); letter-spacing: -0.02em; }
+  .stat-sub { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+  /* ── PROGRESS BAR ── */
+  .prog-wrap { margin: 12px 0; }
+  .prog-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-bottom: 6px; font-family: var(--mono); }
+  .prog-track { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+  .prog-teal { background: var(--teal-mid); }
+  .prog-purple { background: var(--purple-mid); }
+  .prog-amber { background: var(--amber-mid); }
+
+  /* ── ROW ITEMS ── */
+  .row-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .row-item:last-child { border-bottom: none; }
+  .row-label { font-size: 13px; color: var(--text-2); }
+  .row-value { font-size: 13px; font-weight: 600; font-family: var(--mono); }
+  .row-sub { font-size: 10px; color: var(--text-3); margin-top: 1px; }
+
+  /* ── PILLS ── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .pill-green { background: rgba(26,158,117,0.15); color: var(--teal-mid); border: 1px solid rgba(26,158,117,0.3); }
+  .pill-amber { background: rgba(232,148,10,0.15); color: var(--amber-mid); border: 1px solid rgba(232,148,10,0.3); }
+  .pill-red   { background: rgba(139,32,32,0.2); color: #E05555; border: 1px solid rgba(139,32,32,0.4); }
+  .pill-blue  { background: rgba(110,104,216,0.15); color: var(--purple-mid); border: 1px solid rgba(110,104,216,0.3); }
+
+  /* ── BIG NUMBER HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--navy-2) 0%, var(--navy) 100%);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(26,158,117,0.15) 0%, transparent 70%);
+  }
+  .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+  .hero-value { font-size: 38px; font-weight: 800; letter-spacing: -0.04em; font-family: var(--mono); color: var(--text); }
+  .hero-sub { font-size: 12px; color: var(--text-3); margin-top: 6px; }
+
+  /* ── FI STREAM BARS ── */
+  .stream-item { margin-bottom: 14px; }
+  .stream-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .stream-name { font-size: 12px; font-weight: 600; color: var(--text-2); }
+  .stream-amount { font-size: 13px; font-weight: 700; font-family: var(--mono); }
+  .stream-bar { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+  .stream-fill { height: 100%; border-radius: 2px; background: var(--teal-mid); }
+
+  /* ── CONTRIBUTION BARS ── */
+  .contrib { margin-bottom: 10px; }
+  .contrib-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .contrib-name { font-size: 12px; color: var(--text-2); font-weight: 600; }
+  .contrib-val { font-size: 12px; font-family: var(--mono); font-weight: 600; }
+
+  /* ── COLORS ── */
+  .c-teal   { color: var(--teal-mid); }
+  .c-amber  { color: var(--amber-mid); }
+  .c-purple { color: var(--purple-mid); }
+  .c-red    { color: #E05555; }
+  .c-text   { color: var(--text); }
+  .c-muted  { color: var(--text-3); }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* ── ERROR STATE ── */
+  .error-card {
+    background: var(--red-light); border: 1px solid rgba(139,32,32,0.3);
+    border-radius: var(--radius); padding: 16px; margin: 20px;
+    color: var(--red); font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Syncing dashboard</div>
+</div>
+
+<!-- App -->
+<div id="app" style="opacity:0;transition:opacity 0.4s;">
+
+  <div class="header">
+    <div>
+      <div class="header-title">Foster & Maisey</div>
+      <div class="header-sub">Financial Independence Dashboard</div>
+    </div>
+    <div class="sync-badge" id="sync-time">Syncing...</div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="show('bills',this)">Bills</button>
+    <button class="nav-btn" onclick="show('groceries',this)">Groceries</button>
+    <button class="nav-btn" onclick="show('downpayment',this)">Down Payment</button>
+    <button class="nav-btn" onclick="show('networth',this)">Net Worth</button>
+    <button class="nav-btn" onclick="show('fi',this)">FI Tracker</button>
+    <button class="nav-btn" onclick="show('expenses',this)">Expenses</button>
+    <button class="nav-btn" onclick="show('subs',this)">Subscriptions</button>
+  </nav>
+
+  <!-- ── BILLS ── -->
+  <div class="section active" id="sec-bills">
+    <div class="sec-header">
+      <div class="sec-title">Bills Account</div>
+      <div class="sec-sub" id="bills-balance-sub">Capital One Checking</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-label">Account Balance</div>
+      <div class="hero-value" id="bills-balance">—</div>
+      <div class="hero-sub">Target: <span id="bills-target">—</span>/mo</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Contributions This Month</div>
+      <div class="contrib" id="foster-contrib"></div>
+      <div class="contrib" id="maisey-contrib"></div>
+      <div class="contrib" id="nate-contrib"></div>
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;">Total In</span>
+        <span class="c-teal" style="font-family:var(--mono);font-weight:700;" id="bills-total-in">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Bill Outflows This Month</div>
+      <div class="row-item">
+        <span class="row-label">Rent</span>
+        <span class="row-value" id="rent-paid">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Electric</span>
+        <span class="row-value" id="electric-paid">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Groceries (Amex)</span>
+        <span class="row-value" id="groceries-paid">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Citi Autopay</span>
+        <span class="row-value" id="citi-paid">—</span>
+      </div>
+    </div>
+
+    <div class="card" style="background:rgba(122,69,8,0.1);border-color:rgba(232,148,10,0.2);">
+      <div style="font-size:11px;font-weight:700;color:var(--amber-mid);">⚠️ August 2026 Reset</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:4px;">Lease ends + Citi paid off. Contributions drop to $1,495/person.</div>
+    </div>
+  </div>
+
+  <!-- ── GROCERIES ── -->
+  <div class="section" id="sec-groceries">
+    <div class="sec-header">
+      <div class="sec-title">Groceries</div>
+      <div class="sec-sub">Amex Gold Card · Monthly Budget</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-label">Spent This Month</div>
+      <div class="hero-value c-teal" id="grocery-spent">—</div>
+      <div class="hero-sub">of <span id="grocery-budget">—</span> budget · <span id="grocery-status">—</span></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="stat">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value c-teal" id="grocery-remain">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">% Used</div>
+        <div class="stat-value" id="grocery-pct">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="prog-wrap">
+        <div class="prog-labels">
+          <span>Budget progress</span>
+          <span id="grocery-pct-label">—</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill prog-teal" id="grocery-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Card Balance (pay in full)</div>
+      <div style="font-size:24px;font-weight:800;font-family:var(--mono);color:#E05555;" id="amex-balance">—</div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Due monthly — never carry a balance</div>
+    </div>
+  </div>
+
+  <!-- ── DOWN PAYMENT ── -->
+  <div class="section" id="sec-downpayment">
+    <div class="sec-header">
+      <div class="sec-title">Down Payment</div>
+      <div class="sec-sub">20 Chapman St · Bethel, ME · Target Jan 2027</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-label">Total Saved (SoFi)</div>
+      <div class="hero-value c-purple" id="dp-saved">—</div>
+      <div class="hero-sub">Goal: <span id="dp-goal">—</span> · <span id="dp-pct-label">—</span> complete</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="stat">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value c-red" id="dp-remaining">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Months Left</div>
+        <div class="stat-value" id="dp-months">—</div>
+        <div class="stat-sub">to Jan 2027</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="prog-wrap">
+        <div class="prog-labels">
+          <span>Progress to goal</span>
+          <span id="dp-pct-bar-label">—</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill prog-purple" id="dp-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;">
+        <span style="font-size:11px;color:var(--text-3);">Monthly pace needed</span>
+        <span style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--amber-mid);" id="dp-pace">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Contributions By Person</div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">Foster</div>
+          <div class="row-sub">Trek bonus + surplus → Discover → SoFi</div>
+        </div>
+        <div class="row-value c-teal" id="dp-foster">—</div>
+      </div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">Maisey</div>
+          <div class="row-sub">$2,000/mo fixed transfer</div>
+        </div>
+        <div class="row-value c-purple" id="dp-maisey">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NET WORTH ── -->
+  <div class="section" id="sec-networth">
+    <div class="sec-header">
+      <div class="sec-title">Net Worth</div>
+      <div class="sec-sub">Assets − Liabilities · Auto-updated via Finta</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-label">Total Net Worth</div>
+      <div class="hero-value" id="net-worth">—</div>
+      <div class="hero-sub" style="display:flex;gap:12px;margin-top:8px;">
+        <span>Assets: <span class="c-teal" id="total-assets">—</span></span>
+        <span>Liabilities: <span class="c-red" id="total-liabs">—</span></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Key Assets</div>
+      <div class="row-item">
+        <span class="row-label">Discover Spending</span>
+        <span class="row-value" id="discover-bal">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Commission Overage</span>
+        <span class="row-value" id="commission-bal">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">SoFi — Down Payment</span>
+        <span class="row-value c-purple" id="sofi-dp-bal">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Emergency Fund</span>
+        <span class="row-value" id="emergency-bal">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Schwab Roth IRA</span>
+        <span class="row-value" id="schwab-roth">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Schwab Brokerage</span>
+        <span class="row-value" id="schwab-brok">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Barclay Property Equity</span>
+        <span class="row-value c-teal" id="barclay-equity">—</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Maisey Car Equity</span>
+        <span class="row-value" id="maisey-car-eq">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Liabilities</div>
+      <div class="row-item">
+        <span class="row-label">Citi (0% promo)</span>
+        <span class="row-value c-red" id="citi-balance">—</span>
+      </div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">Maisey Collection Debt</div>
+          <div class="row-sub">Target: negotiate $4–6K lump sum Q2 2026</div>
+        </div>
+        <span class="row-value c-red">$10,000</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FI TRACKER ── -->
+  <div class="section" id="sec-fi">
+    <div class="sec-header">
+      <div class="sec-title">FI Tracker</div>
+      <div class="sec-sub">Cashflow stack to financial independence</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-label">Active Cashflow Now</div>
+      <div class="hero-value c-amber" id="fi-active">—</div>
+      <div class="hero-sub">Gap to Job Quit Number: <span id="fi-gap" class="c-red">—</span></div>
+    </div>
+
+    <div class="grid-3">
+      <div class="stat">
+        <div class="stat-label">Quit #</div>
+        <div class="stat-value c-teal" id="fi-quit">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Comfortable</div>
+        <div class="stat-value c-amber" id="fi-comfortable">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Full FI</div>
+        <div class="stat-value c-red" id="fi-full">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="prog-wrap">
+        <div class="prog-labels">
+          <span>Progress to Job Quit Number</span>
+          <span id="fi-pct-label">—</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill prog-amber" id="fi-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Cashflow Stack</div>
+      <div class="stream-item">
+        <div class="stream-top">
+          <span class="stream-name">Barclay Owner Draw</span>
+          <span class="stream-amount c-teal" id="s-barclay">—</span>
+        </div>
+        <div class="stream-bar"><div class="stream-fill" id="sb-barclay" style="width:0%"></div></div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-top">
+          <span class="stream-name">Chapman STR + LTR</span>
+          <span class="stream-amount c-teal" id="s-chapman">—</span>
+        </div>
+        <div class="stream-bar"><div class="stream-fill" id="sb-chapman" style="width:0%"></div></div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-top">
+          <span class="stream-name">Summit Sites</span>
+          <span class="stream-amount c-teal" id="s-summit">—</span>
+        </div>
+        <div class="stream-bar"><div class="stream-fill" id="sb-summit" style="width:0%"></div></div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-top">
+          <span class="stream-name">YouTube</span>
+          <span class="stream-amount c-muted" id="s-youtube">—</span>
+        </div>
+        <div class="stream-bar"><div class="stream-fill" id="sb-youtube" style="width:0%"></div></div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-top">
+          <span class="stream-name">Steamboat STR</span>
+          <span class="stream-amount c-muted" id="s-steamboat">—</span>
+        </div>
+        <div class="stream-bar"><div class="stream-fill" id="sb-steamboat" style="width:0%"></div></div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-top">
+          <span class="stream-name">Portfolio Draw</span>
+          <span class="stream-amount c-muted" id="s-portfolio">—</span>
+        </div>
+        <div class="stream-bar"><div class="stream-fill" id="sb-portfolio" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="background:rgba(232,148,10,0.08);border-color:rgba(232,148,10,0.2);">
+      <div style="font-size:11px;font-weight:700;color:var(--amber-mid);margin-bottom:8px;">🎯 MILESTONE TARGETS</div>
+      <div class="row-item">
+        <span class="row-label">Barclay draw begins</span>
+        <span class="pill pill-amber">Sept 2026</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Chapman closes</span>
+        <span class="pill pill-blue">Jan 2027</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Job Quit Number</span>
+        <span class="pill pill-amber">2030–2031</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Full FI</span>
+        <span class="pill pill-green">2034–2036</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EXPENSES ── -->
+  <div class="section" id="sec-expenses">
+    <div class="sec-header">
+      <div class="sec-title">Expenses</div>
+      <div class="sec-sub">Monthly burn rate · Foster & Maisey</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="stat">
+        <div class="stat-label">Foster</div>
+        <div class="stat-value" id="foster-burn">—</div>
+        <div class="stat-sub">/month</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Maisey</div>
+        <div class="stat-value" id="maisey-burn">—</div>
+        <div class="stat-sub">/month</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Combined Burn Rate</div>
+      <div style="font-size:30px;font-weight:800;font-family:var(--mono);letter-spacing:-0.03em;color:#E05555;" id="combined-burn">—</div>
+      <div style="margin-top:12px;" class="row-item">
+        <span class="row-label">Less Nate offset</span>
+        <span class="row-value c-teal">−$630</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Net personal burn</span>
+        <span class="row-value" id="net-burn">—</span>
+      </div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">Post-Citi burn</div>
+          <div class="row-sub">After Aug 2026 payoff</div>
+        </div>
+        <span class="row-value c-teal" id="post-citi-burn">—</span>
+      </div>
+    </div>
+
+    <div class="card" style="background:rgba(13,31,53,0.6);border-color:rgba(26,158,117,0.2);">
+      <div style="font-size:11px;font-weight:700;color:var(--teal-mid);margin-bottom:8px;">📅 UPCOMING SAVINGS</div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">Citi payoff + lease reset</div>
+          <div class="row-sub">Bills drop $260 · contributions reset</div>
+        </div>
+        <span class="pill pill-green">Aug 2026</span>
+      </div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">Apple Watch paid off</div>
+          <div class="row-sub">Saves ~$35/mo</div>
+        </div>
+        <span class="pill pill-green">Nov 2026</span>
+      </div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">Tundra lease ends</div>
+          <div class="row-sub">Saves $561/mo · do not renew</div>
+        </div>
+        <span class="pill pill-green">Mar 2027</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUBSCRIPTIONS ── -->
+  <div class="section" id="sec-subs">
+    <div class="sec-header">
+      <div class="sec-title">Subscriptions</div>
+      <div class="sec-sub">All recurring charges · Foster & Maisey</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="stat">
+        <div class="stat-label">Monthly Total</div>
+        <div class="stat-value c-amber" id="subs-monthly">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Annual Total</div>
+        <div class="stat-value c-red" id="subs-annual">—</div>
+        <div class="stat-sub">the number that hurts</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Foster — Apple Card</div>
+      <div class="row-item">
+        <span class="row-label">iCloud 50GB</span>
+        <span class="row-value">$2.99</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Claude AI</span>
+        <span class="row-value">$20.60</span>
+      </div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">Apple Watch installments</div>
+          <div class="row-sub">Ends ~Nov 2026</div>
+        </div>
+        <span class="row-value">$35.75</span>
+      </div>
+      <div class="row-item">
+        <div>
+          <div class="row-label">ChatGPT</div>
+          <div class="row-sub" style="color:var(--amber-mid);">⚠️ Review — overlap with Claude?</div>
+        </div>
+        <span class="row-value">$20.00</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Apple Music</span>
+        <span class="row-value">$11.91</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Amazon Prime</span>
+        <span class="row-value">$12.45</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Maisey</div>
+      <div class="row-item">
+        <span class="row-label">iCloud</span>
+        <span class="row-value">$9.99</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Google One</span>
+        <span class="row-value">$2.99</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Spotify</span>
+        <span class="row-value">$12.89</span>
+      </div>
+      <div class="row-item">
+        <span class="row-label">Netflix</span>
+        <span class="row-value">$17.99</span>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:var(--text-3);text-align:center;padding:8px 0;">
+      Add subscriptions in the Google Sheet · HTML updates automatically
+    </div>
+  </div>
+
+</div><!-- end #app -->
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────
+// Replace with your published CSV URL from Google Sheets
+// File > Share > Publish to web > DASHBOARD EXPORT > CSV
+var CSV_URL = 'PASTE_CSV_URL_HERE';
+
+// ── NAV ────────────────────────────────────────────────────────
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('sec-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── FORMATTING ─────────────────────────────────────────────────
+function fmt(val) {
+  var n = parseFloat(String(val).replace(/[^0-9.-]/g,''));
+  if (isNaN(n)) return val || '—';
+  return '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function fmtDec(val) {
+  var n = parseFloat(String(val).replace(/[^0-9.-]/g,''));
+  if (isNaN(n)) return val || '—';
+  return '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function fmtPct(val) {
+  var n = parseFloat(String(val).replace(/[^0-9.-]/g,''));
+  if (isNaN(n)) return '—';
+  return (n * 100).toFixed(1) + '%';
+}
+
+function pct(val) {
+  var n = parseFloat(String(val).replace(/[^0-9.-]/g,''));
+  if (isNaN(n)) return 0;
+  if (n <= 1) return Math.min(100, n * 100);
+  return Math.min(100, n);
+}
+
+function set(id, val) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setBar(id, pctVal) {
+  var el = document.getElementById(id);
+  if (el) el.style.width = Math.min(100, Math.max(0, pctVal)) + '%';
+}
+
+// ── PARSE CSV ──────────────────────────────────────────────────
+function parseCSV(text) {
+  var data = {};
+  var lines = text.trim().split('\n');
+  lines.forEach(function(line) {
+    var cols = line.split(',');
+    if (cols.length >= 2) {
+      var key = cols[0].trim().replace(/"/g,'');
+      var val = cols[1].trim().replace(/"/g,'');
+      if (key) data[key] = val;
+    }
+  });
+  return data;
+}
+
+// ── RENDER ─────────────────────────────────────────────────────
+function render(d) {
+
+  // Meta
+  set('sync-time', d['last_updated'] || 'Synced');
+
+  // ── BILLS
+  set('bills-balance', fmt(d['bills_balance']));
+  set('bills-target', fmt(d['bills_target']));
+  set('bills-total-in', fmt(d['bills_total_in']));
+  set('rent-paid', fmt(d['rent_paid']));
+  set('electric-paid', fmt(d['electric_paid']));
+  set('groceries-paid', fmt(d['groceries_paid']));
+  set('citi-paid', fmt(d['citi_paid']));
+
+  // Contribution rows with progress
+  renderContrib('foster-contrib', 'Foster', d['foster_in'], d['foster_expected'], '#1A9E75');
+  renderContrib('maisey-contrib', 'Maisey', d['maisey_in'], d['maisey_expected'], '#6E68D8');
+  renderContrib('nate-contrib',   'Nate',   d['nate_in'],   d['nate_expected'],   '#8A9BB8');
+
+  // ── GROCERIES
+  set('grocery-spent', fmt(d['grocery_spent']));
+  set('grocery-budget', fmt(d['grocery_budget']));
+  set('grocery-status', d['grocery_status'] || '—');
+  set('grocery-remain', fmt(d['grocery_remain']));
+  set('grocery-pct', fmtPct(d['grocery_pct']));
+  set('grocery-pct-label', fmtPct(d['grocery_pct']));
+  set('amex-balance', fmtDec(d['amex_balance']));
+  setBar('grocery-bar', pct(d['grocery_pct']));
+
+  // ── DOWN PAYMENT
+  set('dp-saved', fmt(d['dp_saved']));
+  set('dp-goal', fmt(d['dp_goal']));
+  set('dp-pct-label', fmtPct(d['dp_pct']));
+  set('dp-pct-bar-label', fmtPct(d['dp_pct']));
+  set('dp-remaining', fmt(d['dp_remaining']));
+  set('dp-months', d['dp_months_left'] || '—');
+  set('dp-pace', fmt(d['dp_pace_needed']) + '/mo');
+  set('dp-foster', fmt(d['dp_foster']));
+  set('dp-maisey', fmt(d['dp_maisey']));
+  setBar('dp-bar', pct(d['dp_pct']));
+
+  // ── NET WORTH
+  set('net-worth', fmt(d['net_worth']));
+  set('total-assets', fmt(d['total_assets']));
+  set('total-liabs', fmt(d['total_liabs']));
+  set('discover-bal', fmt(d['discover_bal']));
+  set('commission-bal', fmt(d['commission_bal']));
+  set('sofi-dp-bal', fmt(d['sofi_dp_bal']));
+  set('emergency-bal', fmt(d['emergency_bal']));
+  set('schwab-roth', fmt(d['schwab_roth']));
+  set('schwab-brok', fmt(d['schwab_brok']));
+  set('barclay-equity', fmt(d['barclay_equity']));
+  set('maisey-car-eq', fmt(d['maisey_car_eq']));
+  set('citi-balance', fmt(d['citi_balance']));
+
+  // ── FI TRACKER
+  set('fi-active', fmt(d['fi_active_now']));
+  set('fi-gap', fmt(d['fi_gap_quit']));
+  set('fi-quit', fmt(d['fi_quit_number']));
+  set('fi-comfortable', fmt(d['fi_comfortable']));
+  set('fi-full', fmt(d['fi_full']));
+  set('fi-pct-label', fmtPct(d['fi_pct_quit']));
+  setBar('fi-bar', pct(d['fi_pct_quit']));
+
+  var fiQuit = parseFloat(d['fi_quit_number']) || 6500;
+  renderStream('barclay',  d['stream_barclay'],  fiQuit);
+  renderStream('chapman',  d['stream_chapman'],  fiQuit);
+  renderStream('summit',   d['stream_summit'],   fiQuit);
+  renderStream('youtube',  d['stream_youtube'],  fiQuit);
+  renderStream('steamboat',d['stream_steamboat'],fiQuit);
+  renderStream('portfolio',d['stream_portfolio'],fiQuit);
+
+  // ── EXPENSES
+  set('foster-burn', fmt(d['foster_burn']));
+  set('maisey-burn', fmt(d['maisey_burn']));
+  set('combined-burn', fmt(d['combined_burn']));
+  set('net-burn', fmt(d['net_burn']));
+  set('post-citi-burn', fmt(d['post_citi_burn']));
+
+  // ── SUBSCRIPTIONS
+  set('subs-monthly', fmt(d['subs_monthly']));
+  set('subs-annual', fmt(d['subs_annual']));
+}
+
+function renderContrib(elId, name, inVal, expectedVal, color) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var inNum = parseFloat(String(inVal).replace(/[^0-9.-]/g,'')) || 0;
+  var expNum = parseFloat(String(expectedVal).replace(/[^0-9.-]/g,'')) || 0;
+  var p = expNum > 0 ? Math.min(100, (inNum / expNum) * 100) : 0;
+  var status = inNum >= expNum ? '✓' : '⏳';
+  el.innerHTML =
+    '<div class="contrib-top">' +
+      '<span class="contrib-name">' + name + ' ' + status + '</span>' +
+      '<span class="contrib-val">' + fmt(inVal) + ' <span style="color:var(--text-3);font-size:10px;">of ' + fmt(expectedVal) + '</span></span>' +
+    '</div>' +
+    '<div class="prog-track"><div class="prog-fill" style="width:' + p + '%;background:' + color + ';"></div></div>';
+}
+
+function renderStream(name, val, total) {
+  var n = parseFloat(String(val).replace(/[^0-9.-]/g,'')) || 0;
+  var p = total > 0 ? Math.min(100, (n / total) * 100) : 0;
+  set('s-' + name, n > 0 ? fmt(val) + '/mo' : '$0/mo');
+  setBar('sb-' + name, p);
+}
+
+// ── FETCH & LOAD ───────────────────────────────────────────────
+function load() {
+  if (CSV_URL === 'PASTE_CSV_URL_HERE') {
+    // Demo mode — show placeholder UI without error
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('app').style.opacity = '1';
+    set('sync-time', 'Demo mode');
+    return;
+  }
+
+  fetch(CSV_URL + '&cachebust=' + Date.now())
+    .then(function(r) {
+      if (!r.ok) throw new Error('Fetch failed: ' + r.status);
+      return r.text();
+    })
+    .then(function(text) {
+      var data = parseCSV(text);
+      render(data);
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('app').style.opacity = '1';
+    })
+    .catch(function(err) {
+      document.getElementById('loading').innerHTML =
+        '<div class="error-card" style="margin:20px;">' +
+        '<strong>Could not load dashboard data.</strong><br><br>' +
+        'Make sure the Google Sheet is published to web as CSV.<br>' +
+        'File > Share > Publish to web > DASHBOARD EXPORT > CSV<br><br>' +
+        '<small>' + err.message + '</small></div>';
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('app').style.opacity = '1';
+    });
+}
+
+window.addEventListener('load', load);
+</script>
+</body>
+</html>
