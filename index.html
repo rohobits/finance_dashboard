@@ -1259,11 +1259,14 @@ function renderSubsList(d) {
     return;
   }
 
-  // Group by person, first-appearance order
-  const groups = new Map();
+  // Group by person — case-insensitive and whitespace-tolerant so "foster",
+  // "Foster", and " Foster " all collapse into one group. First-seen casing
+  // is preserved for the card header.
+  const groups = new Map(); // key = normalized, value = { label, items }
   subs.forEach(s => {
-    if (!groups.has(s.person)) groups.set(s.person, []);
-    groups.get(s.person).push(s);
+    const key = s.person.trim().toLowerCase();
+    if (!groups.has(key)) groups.set(key, { label: s.person.trim(), items: [] });
+    groups.get(key).items.push(s);
   });
 
   // Compute totals — exclude cut/cancelled
@@ -1276,7 +1279,7 @@ function renderSubsList(d) {
   set('subs-monthly', fmt(monthlyTotal));
   set('subs-annual',  fmt(monthlyTotal * 12));
 
-  const html = Array.from(groups.entries()).map(([person, items]) => {
+  const html = Array.from(groups.values()).map(({ label, items }) => {
     const rows = items.map(s => {
       const sl = s.status.toLowerCase();
       const isCut    = sl.includes('cut') || sl.includes('cancel');
@@ -1299,7 +1302,7 @@ function renderSubsList(d) {
     }).join('');
 
     return `<div class="card">
-      <div class="card-label" style="margin-bottom:4px">${escapeHtml(person)}</div>
+      <div class="card-label" style="margin-bottom:4px">${escapeHtml(label)}</div>
       ${rows}
     </div>`;
   }).join('');
