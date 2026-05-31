@@ -1029,8 +1029,10 @@ function render(d) {
   set('post-citi-burn', fmt(c('post_citi_burn')));
 
   // ── SUBS ──
+  // Fallback totals from CSV cells (used if subs_data not present)
   set('subs-monthly', fmt(c('subs_monthly')));
   set('subs-annual',  fmt(c('subs_annual')));
+  renderSubsList(d);
 }
 
 // ── DEMO MODE ────────────────────────────────────────────────────────────────
@@ -1204,47 +1206,42 @@ function renderBarclay() {
   }
 }
 
-// ── SUBSCRIPTIONS ────────────────────────────────────────────────────────────
+// ── SUBSCRIPTIONS LIST ───────────────────────────────────────────────────────
+// Reads a single `subs_data` cell from the published CSV. Format per row:
+//   Name|Person|Monthly|Status|Notes
+// Rows separated by `~`. See DASHBOARD EXPORT formula in the README.
 
-const SUBS_SHEET_ID = '1Rxx-QuJLELGm-Eo_d5hTR7MqPFEHlIf4bUqo8A_aG4Y';
-const SUBS_TAB = 'SUBSCRIPTIONS';
-const SUBS_RANGE = 'A8:G1000';
-
-async function loadSubs() {
-  const container = document.getElementById('subs-list');
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${SUBS_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SUBS_TAB)}&range=${SUBS_RANGE}&headers=1`;
-    const res = await fetch(url, { cache:'no-store' });
-    const txt = await res.text();
-    const json = JSON.parse(txt.replace(/^[^(]*\(/, '').replace(/\);?\s*$/, ''));
-    const rows = (json.table && json.table.rows) || [];
-    const subs = [];
-    rows.forEach(r => {
-      const c = r.c || [];
-      const name    = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
-      const person  = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
-      const monthly = c[2] && c[2].v != null ? Number(c[2].v) : NaN;
-      const annual  = c[3] && c[3].v != null ? Number(c[3].v) : NaN;
-      const card    = c[4] && c[4].v != null ? String(c[4].v).trim() : '';
-      const status  = c[5] && c[5].v != null ? String(c[5].v).trim() : '';
-      const notes   = c[6] && c[6].v != null ? String(c[6].v).trim() : '';
-      // skip blank/summary rows
-      if (!name || !person) return;
-      if (/^(total|sum|grand)/i.test(name)) return;
-      subs.push({ name, person, monthly, annual, card, status, notes });
-    });
-    renderSubs(subs);
-  } catch (e) {
-    console.error('[Subs] Fetch error:', e);
-    if (container) {
-      container.innerHTML = `<div class="card"><div class="note" style="color:var(--amber)">Could not load subscriptions from the sheet.</div></div>`;
-    }
-  }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  })[ch]);
 }
 
-function renderSubs(subs) {
+function renderSubsList(d) {
   const container = document.getElementById('subs-list');
   if (!container) return;
+
+  const raw = d['subs_data'];
+  if (!raw) {
+    container.innerHTML = `<div class="card"><div class="note" style="color:var(--amber)">No <code>subs_data</code> row found in the DASHBOARD EXPORT tab. Add the flattening formula to see live subscriptions here.</div></div>`;
+    return;
+  }
+
+  const subs = raw.split('~').map(s => {
+    const p = s.split('|');
+    return {
+      name:    (p[0] || '').trim(),
+      person:  (p[1] || '').trim(),
+      monthly: parseCurrency(p[2] || ''),
+      status:  (p[3] || '').trim(),
+      notes:   (p[4] || '').trim(),
+    };
+  }).filter(s => s.name && s.person);
+
+  if (!subs.length) {
+    container.innerHTML = `<div class="card"><div class="note">No subscriptions found in the sheet.</div></div>`;
+    return;
+  }
 
   // Group by person, first-appearance order
   const groups = new Map();
@@ -1253,17 +1250,15 @@ function renderSubs(subs) {
     groups.get(s.person).push(s);
   });
 
-  // Totals exclude cut/cancelled rows
-  let monthlyTotal = 0, annualTotal = 0;
+  // Compute totals — exclude cut/cancelled
+  let monthlyTotal = 0;
   subs.forEach(s => {
     const sl = s.status.toLowerCase();
     if (sl.includes('cut') || sl.includes('cancel')) return;
     if (!isNaN(s.monthly)) monthlyTotal += s.monthly;
-    if (!isNaN(s.annual))  annualTotal  += s.annual;
-    else if (!isNaN(s.monthly)) annualTotal += s.monthly * 12;
   });
   set('subs-monthly', fmt(monthlyTotal));
-  set('subs-annual',  fmt(annualTotal));
+  set('subs-annual',  fmt(monthlyTotal * 12));
 
   const html = Array.from(groups.entries()).map(([person, items]) => {
     const rows = items.map(s => {
@@ -1272,28 +1267,28 @@ function renderSubs(subs) {
       const isReview = sl.includes('review');
 
       const noteParts = [];
-      if (s.notes) noteParts.push(s.notes);
+      if (s.notes)  noteParts.push(escapeHtml(s.notes));
       if (isReview) noteParts.push(`<span style="color:#f0a82a">Review</span>`);
       if (isCut)    noteParts.push(`<span style="color:#e87070">Cancelled</span>`);
       const noteHtml = noteParts.length ? `<div class="sub-note">${noteParts.join(' · ')}</div>` : '';
 
-      const nameStyle = isCut ? 'text-decoration:line-through;color:var(--text-3)' : '';
+      const nameStyle  = isCut ? 'text-decoration:line-through;color:var(--text-3)' : '';
       const priceStyle = isCut ? 'color:var(--text-3);text-decoration:line-through' : '';
-      const priceText = isNaN(s.monthly) ? '—' : fmtDec(s.monthly);
+      const priceText  = isNaN(s.monthly) ? '—' : fmtDec(s.monthly);
 
       return `<div class="sub-row">
-        <div><div class="sub-name" style="${nameStyle}">${s.name}</div>${noteHtml}</div>
+        <div><div class="sub-name" style="${nameStyle}">${escapeHtml(s.name)}</div>${noteHtml}</div>
         <div class="sub-price" style="${priceStyle}">${priceText}</div>
       </div>`;
     }).join('');
 
     return `<div class="card">
-      <div class="card-label" style="margin-bottom:4px">${person}</div>
+      <div class="card-label" style="margin-bottom:4px">${escapeHtml(person)}</div>
       ${rows}
     </div>`;
   }).join('');
 
-  container.innerHTML = html || `<div class="card"><div class="note">No subscriptions found in the sheet.</div></div>`;
+  container.innerHTML = html;
 }
 
 // ── TABS ─────────────────────────────────────────────────────────────────────
@@ -1323,7 +1318,7 @@ function initTabs() {
 document.addEventListener('DOMContentLoaded', async () => {
   initTabs();
   renderBarclay();
-  await Promise.all([loadData(), loadBarclay(), loadSubs()]);
+  await Promise.all([loadData(), loadBarclay()]);
 
   // Fade out loading, fade in app
   const loading = document.getElementById('loading');
