@@ -283,6 +283,42 @@ body{
   font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);
 }
 
+/* ── BARCLAY ELIGIBILITY RULE ── */
+.b-rule{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;border-top:1px solid var(--border);
+}
+.b-rule:first-child{border-top:none}
+.b-rule-ic{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:600;font-size:14px;
+  width:18px;text-align:center;flex-shrink:0;
+  padding-top:1px;
+}
+.b-rule-title{font-size:13px;color:var(--text)}
+
+/* ── BARCLAY DRAW NOTE ── */
+.b-draw-note{
+  margin-top:12px;padding:11px 12px;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:12px;color:var(--text-2);
+  line-height:1.5;
+}
+.b-draw-note strong{color:var(--text);font-weight:700}
+
+/* ── BARCLAY UTILITIES BANNER ── */
+.banner-success{
+  background:rgba(26,158,117,.1);
+  border:1px solid rgba(26,158,117,.25);
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:12px;color:#2ecc9e;
+  margin-bottom:12px;
+  line-height:1.5;
+}
+
 /* ── STAGGER ANIMATIONS ── */
 .card:nth-child(1){animation-delay:.05s}
 .card:nth-child(2){animation-delay:.10s}
@@ -304,6 +340,7 @@ body{
     <button class="tab-btn" data-tab="downpayment">Down Pmt</button>
     <button class="tab-btn" data-tab="networth">Net Worth</button>
     <button class="tab-btn" data-tab="fi">FI Tracker</button>
+    <button class="tab-btn" data-tab="barclay">Barclay</button>
     <button class="tab-btn" data-tab="expenses">Expenses</button>
     <button class="tab-btn" data-tab="subs">Subs</button>
   </nav>
@@ -590,6 +627,138 @@ body{
         <span class="pill pill-blue">2034–2036</span>
       </div>
     </div>
+  </section>
+
+  <!-- ── SECTION: BARCLAY PROPERTY ── -->
+  <section class="section" id="tab-barclay">
+    <div class="hero">
+      <div class="hero-label">Net Monthly Cashflow</div>
+      <div class="big-num mono" style="color:#2ecc9e">$953.64</div>
+      <div class="hero-sub">1160 Barclay St · Craig, CO · 5bd/3ba</div>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-label-sm" style="margin-bottom:6px">Est. Value</div>
+        <div class="mid-num mono">$342,700</div>
+        <div class="note">Purchase $265,000</div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-label-sm" style="margin-bottom:6px">Equity</div>
+        <div class="mid-num mono" style="color:#2ecc9e" id="b-equity">—</div>
+        <div class="note">Value − mortgage</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:var(--gap)">
+      <div class="row">
+        <div>
+          <div class="card-label">Mortgage Balance</div>
+          <div class="note">2.75% · live via Finta</div>
+        </div>
+        <div class="mid-num mono" id="b-mortgage">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:14px">
+        <span class="card-label">Owner Draw Eligibility</span>
+        <span id="b-draw-badge" class="pill pill-amber">NOT YET ELIGIBLE</span>
+      </div>
+      <div id="b-rules"></div>
+      <div class="b-draw-note">
+        Draw amount when eligible: <strong>$600/mo</strong> · scheduled to begin <strong>Sept 2026</strong>. Routes to your personal FI gap — surfaces on FI Tracker as Barclay Owner Draw.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:14px">Reserve Accounts</div>
+      <div id="b-fund"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:12px">Monthly Cashflow</div>
+      <div class="row"><span class="row-label">Gross Rent</span><span class="row-val" style="color:#2ecc9e">$2,400.00</span></div>
+      <div class="row"><span class="row-label">Mortgage (PITI)</span><span class="row-val" style="color:var(--red)">−$1,347.36</span></div>
+      <div class="row"><span class="row-label">Internet</span><span class="row-val" style="color:var(--red)">−$99.00</span></div>
+      <hr class="divider">
+      <div class="row">
+        <span class="row-label" style="font-weight:700;color:var(--text)">Net Cashflow</span>
+        <span class="row-val" style="color:#2ecc9e;font-size:15px">$953.64</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:12px">Utilities — May 2026</div>
+      <div class="banner-success">
+        ✓ All statements received — request payment from tenant
+      </div>
+      <div class="row"><span class="row-label">Electric (YVEA)</span><span class="row-val">$175.37</span></div>
+      <div class="row"><span class="row-label">Gas (Atmos)</span><span class="row-val">$31.83</span></div>
+      <div class="row"><span class="row-label">Water/Sewer/Trash</span><span class="row-val">$125.30</span></div>
+      <hr class="divider">
+      <div class="row">
+        <span class="row-label" style="font-weight:700;color:var(--text)">Monthly Total</span>
+        <span class="row-val" style="font-size:15px">$332.50</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:12px">Lease Status</div>
+      <div class="row"><span class="row-label">Tenant tenure</span><span class="row-val">~2.5 yrs</span></div>
+      <div class="row"><span class="row-label">Current rent</span><span class="row-val">$2,400.00/mo</span></div>
+      <div class="row"><span class="row-label">Lease end</span><span class="row-val">Jul 2026</span></div>
+      <div class="row"><span class="row-label">Renewal</span><span class="pill pill-amber">VERBAL — WRITTEN PENDING</span></div>
+      <div class="row"><span class="row-label">Last increase</span><span class="row-val" style="font-size:12px">Held flat — plan 2–3% next</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" style="margin-bottom:4px">Upcoming Transfers & Actions</div>
+      <div class="milestone-row">
+        <div>
+          <div class="milestone-label">Switch internet $99 → $74.99/mo</div>
+          <div class="milestone-sub">Saves $24/mo · HIGH priority</div>
+        </div>
+        <span class="pill pill-red">NOW</span>
+      </div>
+      <div class="milestone-row">
+        <div>
+          <div class="milestone-label">Send written lease renewal</div>
+          <div class="milestone-sub">Lock the verbal multi-year commitment</div>
+        </div>
+        <span class="pill pill-red">NOW</span>
+      </div>
+      <div class="milestone-row">
+        <div>
+          <div class="milestone-label">Vacancy top-up → $5k goal</div>
+          <div class="milestone-sub">$1,000 · last leg to fully funded</div>
+        </div>
+        <span class="pill pill-amber">JUN 11</span>
+      </div>
+      <div class="milestone-row">
+        <div>
+          <div class="milestone-label">Emergency recurring kicks in</div>
+          <div class="milestone-sub">$900/mo auto → builds toward $4,500</div>
+        </div>
+        <span class="pill pill-purple">JUL–AUG</span>
+      </div>
+      <div class="milestone-row">
+        <div>
+          <div class="milestone-label">Owner draw begins</div>
+          <div class="milestone-sub">$600/mo · system reaches autopilot</div>
+        </div>
+        <span class="pill pill-teal">SEP 1</span>
+      </div>
+      <div class="milestone-row">
+        <div>
+          <div class="milestone-label">CapEx ramps up</div>
+          <div class="milestone-sub">$77.65 → $377.65/mo deployed</div>
+        </div>
+        <span class="pill pill-blue">SEP 11</span>
+      </div>
+    </div>
+
+    <div class="note" style="text-align:center;padding:4px 0 8px" id="b-sync-stamp">—</div>
   </section>
 
   <!-- ── SECTION 6: EXPENSES ── -->
@@ -950,6 +1119,139 @@ async function loadData() {
   }
 }
 
+// ── BARCLAY PROPERTY ─────────────────────────────────────────────────────────
+
+const BARCLAY_SHEET_ID = '1Y9Nr1MJEr31eYJ6RX98TdFFFzSLb-EHKe86f_NM8_gs';
+const BARCLAY_EST_VALUE = 342700;
+const BARCLAY_GOALS = { rentalOps:700, maintenance:2500, vacancy:5000, emergency:4500 };
+const BARCLAY_MATCH = {
+  rentalOps:   n => n.includes('Barclay - Rental Ops'),
+  maintenance: n => n.includes('Barclay - Maintanence'),
+  vacancy:     n => n.includes('Barclay - Vacancy'),
+  emergency:   n => n.includes('Barclay - Emergency'),
+  capex:       n => n.includes('Barclay - CapEx'),
+  mortgage:    n => n.trim() === 'Barclay Mortgage',
+};
+
+let BARCLAY_DATA = {
+  rentalOps:299.94, maintenance:2501.72, vacancy:3855.84,
+  emergency:1800.00, capex:310.60, mortgage:225356.55,
+};
+let BARCLAY_LIVE = false;
+let BARCLAY_STAMP = '5/30/2026 (cached snapshot)';
+
+async function loadBarclay() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${BARCLAY_SHEET_ID}/gviz/tq?tqx=out:json&sheet=Accounts`;
+    const res = await fetch(url, { cache:'no-store' });
+    const txt = await res.text();
+    const json = JSON.parse(txt.replace(/^[^(]*\(/, '').replace(/\);?\s*$/, ''));
+    const rows = (json.table && json.table.rows) || [];
+    const found = {};
+    rows.forEach(r => {
+      const c = r.c || [];
+      const name = c[1] && c[1].v != null ? String(c[1].v) : '';
+      const bal  = c[9] && c[9].v != null ? Number(c[9].v) : null;
+      if (!name || bal == null || isNaN(bal)) return;
+      for (const key in BARCLAY_MATCH) {
+        if (BARCLAY_MATCH[key](name)) found[key] = bal;
+      }
+    });
+    if (Object.keys(found).length >= 4) {
+      BARCLAY_DATA = Object.assign({}, BARCLAY_DATA, found);
+      BARCLAY_LIVE = true;
+      BARCLAY_STAMP = new Date().toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    }
+  } catch (e) { /* keep seed snapshot */ }
+  renderBarclay();
+}
+
+function renderBarclay() {
+  const d = BARCLAY_DATA;
+  set('b-equity',   fmt(BARCLAY_EST_VALUE - d.mortgage));
+  set('b-mortgage', fmt(d.mortgage));
+  set('b-sync-stamp', (BARCLAY_LIVE ? 'Live · ' : 'Cached · ') + 'Last sync: ' + BARCLAY_STAMP);
+
+  // Reserve Accounts
+  const accts = [
+    { key:'rentalOps',   nm:'Rental Ops',  note:'draw gate · >$700',     goal:BARCLAY_GOALS.rentalOps   },
+    { key:'maintenance', nm:'Maintenance', note:'',                       goal:BARCLAY_GOALS.maintenance },
+    { key:'vacancy',     nm:'Vacancy',     note:'raised → $5k',          goal:BARCLAY_GOALS.vacancy     },
+    { key:'emergency',   nm:'Emergency',   note:'$900/mo recurring',     goal:BARCLAY_GOALS.emergency   },
+    { key:'capex',       nm:'CapEx',       note:'accumulates',           goal:null                       },
+  ];
+
+  const fundEl = document.getElementById('b-fund');
+  if (fundEl) {
+    fundEl.innerHTML = accts.map((a, i) => {
+      const bal = d[a.key];
+      const mb = i === accts.length - 1 ? '' : 'margin-bottom:14px';
+      const noteHtml = a.note ? ` <span class="contrib-meta" style="font-weight:400">· ${a.note}</span>` : '';
+      if (a.goal === null) {
+        return `<div style="${mb}">
+          <div class="row" style="margin-bottom:4px">
+            <span class="contrib-name">${a.nm}${noteHtml}</span>
+            <span class="row-val">${fmtDec(bal)}</span>
+          </div>
+          <div class="bar-wrap"><div class="bar-fill bar-purple" style="width:100%;opacity:.35"></div></div>
+          <div class="contrib-meta" style="margin-top:4px">Ongoing — no cap · $377.65/mo from Sep</div>
+        </div>`;
+      }
+      const p = Math.min(100, bal / a.goal * 100);
+      const full = bal >= a.goal;
+      const cls = full ? 'bar-teal' : (p < 50 ? 'bar-amber' : 'bar-teal');
+      const remain = Math.max(0, a.goal - bal);
+      return `<div style="${mb}">
+        <div class="row" style="margin-bottom:4px">
+          <span class="contrib-name">${a.nm}${noteHtml}</span>
+          <span class="row-val">${fmtDec(bal)} / ${fmt(a.goal)}</span>
+        </div>
+        <div class="bar-wrap"><div class="bar-fill ${cls}" style="width:${p}%"></div></div>
+        <div class="contrib-meta" style="margin-top:4px">${p.toFixed(0)}% funded · ${full ? '✓ FUNDED' : fmtDec(remain) + ' to go'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Eligibility
+  const r1 = d.rentalOps > BARCLAY_GOALS.rentalOps;
+  const goalsMet =
+    d.maintenance >= BARCLAY_GOALS.maintenance &&
+    d.vacancy     >= BARCLAY_GOALS.vacancy &&
+    d.emergency   >= BARCLAY_GOALS.emergency &&
+    d.rentalOps   >= BARCLAY_GOALS.rentalOps;
+  const eligible = r1 && goalsMet;
+  const pending = [];
+  if (d.rentalOps   < BARCLAY_GOALS.rentalOps)   pending.push('Rental Ops');
+  if (d.vacancy     < BARCLAY_GOALS.vacancy)     pending.push('Vacancy');
+  if (d.emergency   < BARCLAY_GOALS.emergency)   pending.push('Emergency');
+  if (d.maintenance < BARCLAY_GOALS.maintenance) pending.push('Maintenance');
+
+  const rulesEl = document.getElementById('b-rules');
+  if (rulesEl) {
+    rulesEl.innerHTML = `
+      <div class="b-rule">
+        <span class="b-rule-ic" style="color:${r1 ? '#2ecc9e' : '#f0a82a'}">${r1 ? '✓' : '○'}</span>
+        <div>
+          <div class="b-rule-title">Rental Ops above $700 buffer</div>
+          <div class="note" style="margin-top:2px">${fmtDec(d.rentalOps)} ${r1 ? '— met' : '— ' + fmtDec(BARCLAY_GOALS.rentalOps - d.rentalOps) + ' short'}</div>
+        </div>
+      </div>
+      <div class="b-rule">
+        <span class="b-rule-ic" style="color:${goalsMet ? '#2ecc9e' : '#f0a82a'}">${goalsMet ? '✓' : '○'}</span>
+        <div>
+          <div class="b-rule-title">All reserve goals funded</div>
+          <div class="note" style="margin-top:2px">${goalsMet ? 'All targets reached' : pending.length + ' account(s) pending: ' + pending.join(', ')}</div>
+        </div>
+      </div>`;
+  }
+
+  const badge = document.getElementById('b-draw-badge');
+  if (badge) {
+    if (eligible) { badge.className = 'pill pill-teal';  badge.textContent = 'ELIGIBLE ✓'; }
+    else          { badge.className = 'pill pill-amber'; badge.textContent = 'NOT YET ELIGIBLE'; }
+  }
+}
+
 // ── TABS ─────────────────────────────────────────────────────────────────────
 
 function initTabs() {
@@ -976,7 +1278,8 @@ function initTabs() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   initTabs();
-  await loadData();
+  renderBarclay();
+  await Promise.all([loadData(), loadBarclay()]);
 
   // Fade out loading, fade in app
   const loading = document.getElementById('loading');
