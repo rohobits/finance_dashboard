@@ -1221,22 +1221,38 @@ function renderSubsList(d) {
   const container = document.getElementById('subs-list');
   if (!container) return;
 
-  const raw = d['subs_data'];
+  // Accept either `subs_data` (preferred, matches other key naming) or
+  // `subs-data` (current sheet has the hyphenated version).
+  const raw = d['subs_data'] || d['subs-data'];
   if (!raw) {
     container.innerHTML = `<div class="card"><div class="note" style="color:var(--amber)">No <code>subs_data</code> row found in the DASHBOARD EXPORT tab. Add the flattening formula to see live subscriptions here.</div></div>`;
     return;
   }
 
+  // Each row is Name|Person|Monthly|Status|Notes, separated by ~.
+  // Tolerate the legacy form Name,Person|Monthly|Status|Notes (4 pipe-fields)
+  // in case the user's TEXTJOIN formula uses a comma between A and B.
   const subs = raw.split('~').map(s => {
     const p = s.split('|');
-    return {
-      name:    (p[0] || '').trim(),
-      person:  (p[1] || '').trim(),
-      monthly: parseCurrency(p[2] || ''),
-      status:  (p[3] || '').trim(),
-      notes:   (p[4] || '').trim(),
-    };
-  }).filter(s => s.name && s.person);
+    let name, person, monthly, status, notes;
+    if (p.length >= 5) {
+      name    = (p[0] || '').trim();
+      person  = (p[1] || '').trim();
+      monthly = parseCurrency(p[2] || '');
+      status  = (p[3] || '').trim();
+      notes   = (p[4] || '').trim();
+    } else if (p.length >= 4) {
+      const np = (p[0] || '').split(',');
+      name    = (np[0] || '').trim();
+      person  = np.slice(1).join(',').trim();
+      monthly = parseCurrency(p[1] || '');
+      status  = (p[2] || '').trim();
+      notes   = (p[3] || '').trim();
+    } else {
+      return null;
+    }
+    return { name, person, monthly, status, notes };
+  }).filter(s => s && s.name && s.person && !/^\d+$/.test(s.name));
 
   if (!subs.length) {
     container.innerHTML = `<div class="card"><div class="note">No subscriptions found in the sheet.</div></div>`;
